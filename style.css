@@ -1,0 +1,62 @@
+/* Custom styles will go here */
+
+/* Custom styles for the main content container to occupy 98% of page width */
+.app-main-content-container {
+    width: 100% !important; /* Forces the width to 98% */
+    max-width: none !important; /* Removes Bootstrap's default max-width constraint */
+    margin-left: auto; /* Centers the container */
+    margin-right: auto; /* Centers the container */
+}
+
+/* Additional styles for security feature cards */
+.security-feature-card {
+    border: 1px solid #e0e0e0;
+    transition: all 0.2s ease-in-out;
+}
+
+.security-feature-card:hover {
+    border-color: #007bff;
+    box-shadow: 0 0.5rem 1rem rgba(0, 123, 255, 0.1);
+}
+
+.security-feature-card .card-title {
+    color: #343a40;
+}
+
+.security-feature-card .form-check-input:checked {
+    background-color: #28a745; /* Green for enabled */
+    border-color: #28a745;
+}
+
+.security-feature-card .form-check-input:not(:checked) {
+    background-color: #dc3545; /* Red for disabled */
+    border-color: #dc3545;
+}
+
+/* Style for cards that have been explicitly configured (deviate from default) */
+.security-feature-card.configured-explicitly {
+    border-color: #ffc107; /* Yellow border to indicate change */
+    box-shadow: 0 0.5rem 1rem rgba(255, 193, 7, 0.15);
+}
+
+/* Style for the console log container */
+#consoleLogContainer {
+    border: 1px solid #ced4da;
+    background-color: #f8f9fa;
+}
+
+#consoleLog {
+    font-family: 'Consolas', 'Monaco', 'Lucida Console', monospace;
+    font-size: 0.85em;
+    white-space: pre-wrap; /* Ensures long lines wrap */
+    word-wrap: break-word; /* Breaks long words */
+}
+
+/* Updated style for italic text within blockquote in documentation to 5px with higher specificity */
+.documentation-blockquote-text p em,
+.documentation-blockquote-text p i {
+    font-size: 14px; /* Changed from 5px for readability, as 5px is extremely small */
+    display: flex;
+    align-items: center; /* Vertically centers content */
+    justify-content: center; /* Horizontally centers content if needed, though not strictly required for text */
+}

@@ -1,0 +1,46 @@
+@echo off
+REM Windows Security Configuration Launcher
+REM Version: %APP_VERSION%
+REM Build: %APP_BUILD%
+REM Generated on: %GENERATION_DATE%
+
+REM This batch file launches the PowerShell configuration script.
+REM It requires Administrator privileges to make system changes.
+
+:: Check if running as Administrator
+net session >nul 2>&1
+if %errorLevel% neq 0 (
+    echo.
+    echo ====================================================================
+    echo WARNING: This script needs to be run as an Administrator.
+    echo Please RIGHT-CLICK this file and select "Run as administrator".
+    echo ====================================================================
+    echo.
+    pause
+    exit /b 1
+)
+
+echo.
+echo ====================================================================
+echo Launching Windows Security Configuration Script...
+echo ====================================================================
+echo.
+
+PowerShell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0%PS_SCRIPT_FILENAME%"
+if %errorlevel% neq 0 (
+    echo.
+    echo ====================================================================
+    echo An error occurred during script execution.
+    echo Please review the output above for error messages.
+    echo ====================================================================
+    pause
+) else (
+    echo.
+    echo ====================================================================
+    echo Script execution completed.
+    echo Please review the output above for details and any reboot requirements.
+    echo ====================================================================
+    pause
+)
+
+exit /b 0

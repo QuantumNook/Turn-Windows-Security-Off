@@ -1,0 +1,104 @@
+# Windows Security Configuration Script
+# Version: %APP_VERSION%
+# Build: %APP_BUILD%
+# Generated on: %GENERATION_DATE%
+
+# This script applies Windows security configurations based on user selections.
+# It prioritizes Group Policy-like registry settings for reversibility.
+# Requires Administrator privileges to run.
+
+# Global Console Logging Toggle
+# This value is set by the application. You can manually change this to $false to disable verbose console output during execution.
+$EnableConsoleLogging = %ENABLE_CONSOLE_LOGGING%
+
+function Write-Log {
+    param (
+        [string]$Message,
+        [string]$Type = "INFO"
+    )
+    if ($EnableConsoleLogging) {
+        $Timestamp = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
+        $FormattedMessage = "[${Timestamp}] [${Type.ToUpper()}] ${Message}"
+        Write-Host $FormattedMessage
+    }
+}
+
+Write-Log "Starting configuration script execution." -Type "INFO"
+
+try {
+    Write-Log "Checking for Administrator privileges..." -Type "INFO"
+    if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
+        Write-Log "Script is not running with Administrator privileges. Please re-run as Administrator." -Type "ERROR"
+        # Prompt user and exit
+        Read-Host "Press Enter to exit."
+        exit 1
+    }
+    Write-Log "Running with Administrator privileges." -Type "INFO"
+
+    $rebootNeeded = $false
+
+    # Placeholder for the dynamically generated array of selected features
+    # This section will be populated by generate_script_logic.js
+    %SELECTED_FEATURES_ARRAY_PLACEHOLDER%
+
+    # Apply Configurations
+    Write-Log "Applying selected security configurations..." -Type "INFO"
+    foreach ($feature in $featuresToConfigure) {
+        Write-Log "Configuring feature: $($feature.name)..." -Type "INFO"
+        try {
+            $path = $feature.registry.path
+            $valueName = $feature.registry.valueName
+            $type = $feature.registry.type
+            $data = $feature.checked ? $feature.registry.enabled.data : $feature.registry.disabled.data
+            $action = $feature.checked ? "Enabling" : "Disabling"
+
+            Write-Log "Attempting to ${action} $($feature.name)..." -Type "INFO"
+            Write-Log "  Path: $($path)" -Type "DEBUG"
+            Write-Log "  ValueName: $($valueName)" -Type "DEBUG"
+            Write-Log "  Type: $($type)" -Type "DEBUG"
+            Write-Log "  Target Data: $($data)" -Type "DEBUG"
+
+            # Ensure the parent key exists before setting the value
+            $keyPath = $path.Replace("HKLM\\", "HKLM:\").Replace("HKCU\\", "HKCU:\")
+            $parentKey = Split-Path -Path $keyPath -Parent
+
+            if (-not (Test-Path $parentKey)) {
+                Write-Log "Parent registry key '$($parentKey)' does not exist. Creating it." -Type "WARN"
+                New-Item -Path $parentKey -Force | Out-Null
+            }
+
+            Set-ItemProperty -Path $keyPath -Name $valueName -Value $data -Force -Type $type
+            Write-Log "Successfully ${action} $($feature.name)." -Type "INFO"
+
+            if ($feature.rebootRequired) {
+                $rebootNeeded = $true
+                Write-Log "  Reboot is required for this change to take full effect." -Type "INFO"
+            }
+        } catch {
+            Write-Log "Failed to configure $($feature.name). Error: $($_.Exception.Message)" -Type "ERROR"
+            Write-Log "  Details: $($_.Exception.InnerException)" -Type "ERROR"
+        }
+    }
+
+    Write-Log "Configuration script execution completed." -Type "INFO"
+
+    if ($rebootNeeded) {
+        Write-Log "One or more configurations require a system reboot to take full effect." -Type "WARN"
+        $rebootChoice = Read-Host "A reboot is recommended for changes to take full effect. Reboot now? (Y/N)"
+        if ($rebootChoice -eq 'Y' -or $rebootChoice -eq 'y') {
+            Write-Log "Initiating system reboot..." -Type "INFO"
+            Restart-Computer -Force
+        } else {
+            Write-Log "Reboot deferred. Please reboot your system manually at your earliest convenience." -Type "INFO"
+        }
+    } else {
+        Write-Log "No reboot is required for the applied changes." -Type "INFO"
+    }
+
+} catch {
+    Write-Log "An unexpected error occurred during script execution: $($_.Exception.Message)" -Type "ERROR"
+    Write-Log "  Details: $($_.Exception.InnerException)" -Type "ERROR"
+} finally {
+    Write-Log "Script finished. Press any key to close this window." -Type "INFO"
+    Read-Host
+}

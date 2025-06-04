@@ -1,0 +1,104 @@
+# Windows Security Revert Script
+# Version: %APP_VERSION%
+# Build: %APP_BUILD%
+# Generated on: %GENERATION_DATE%
+
+# This script reverts Windows security configurations to their default/enabled states.
+# It uses Group Policy-like registry settings to achieve this.
+# Requires Administrator privileges to run.
+
+# Global Console Logging Toggle
+# This value is set by the application. You can manually change this to $false to disable verbose console output during execution.
+$EnableConsoleLogging = %ENABLE_CONSOLE_LOGGING%
+
+function Write-Log {
+    param (
+        [string]$Message,
+        [string]$Type = "INFO"
+    )
+    if ($EnableConsoleLogging) {
+        $Timestamp = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
+        $FormattedMessage = "[${Timestamp}] [${Type.ToUpper()}] ${Message}"
+        Write-Host $FormattedMessage
+    }
+}
+
+Write-Log "Starting revert script execution." -Type "INFO"
+
+try {
+    Write-Log "Checking for Administrator privileges..." -Type "INFO"
+    if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
+        Write-Log "Script is not running with Administrator privileges. Please re-run as Administrator." -Type "ERROR"
+        # Prompt user and exit
+        Read-Host "Press Enter to exit."
+        exit 1
+    }
+    Write-Log "Running with Administrator privileges." -Type "INFO"
+
+    $rebootNeeded = $false
+
+    # Placeholder for the dynamically generated array of features to revert
+    # This section will be populated by generate_script_logic.js with original feature states.
+    %REVERT_FEATURES_ARRAY_PLACEHOLDER%
+
+    # Revert Configurations
+    Write-Log "Reverting selected security configurations to default/enabled states..." -Type "INFO"
+    foreach ($feature in $featuresToRevert) {
+        Write-Log "Reverting feature: $($feature.name)..." -Type "INFO"
+        try {
+            $path = $feature.registry.path
+            $valueName = $feature.registry.valueName
+            $type = $feature.registry.type
+            # For reverting, we set the 'enabled' state data for all features.
+            # This assumes the 'enabled' state in our SECURITY_FEATURES_DATA corresponds to the default/desired secure state.
+            $data = $feature.registry.enabled.data 
+            
+            Write-Log "Attempting to revert $($feature.name) to default (enabled) state..." -Type "INFO"
+            Write-Log "  Path: $($path)" -Type "DEBUG"
+            Write-Log "  ValueName: $($valueName)" -Type "DEBUG"
+            Write-Log "  Type: $($type)" -Type "DEBUG"
+            Write-Log "  Target Data: $($data)" -Type "DEBUG"
+
+            $keyPath = $path.Replace("HKLM\\", "HKLM:\").Replace("HKCU\\", "HKCU:\")
+            $parentKey = Split-Path -Path $keyPath -Parent
+
+            if (-not (Test-Path $parentKey)) {
+                Write-Log "Parent registry key '$($parentKey)' does not exist. Skipping reversion for this feature." -Type "WARN"
+                continue # Skip to next feature if parent key is missing
+            }
+
+            Set-ItemProperty -Path $keyPath -Name $valueName -Value $data -Force -Type $type
+            Write-Log "Successfully reverted $($feature.name)." -Type "INFO"
+
+            if ($feature.rebootRequired) {
+                $rebootNeeded = $true
+                Write-Log "  Reboot is required for this reverted change to take full effect." -Type "INFO"
+            }
+        } catch {
+            Write-Log "Failed to revert $($feature.name). Error: $($_.Exception.Message)" -Type "ERROR"
+            Write-Log "  Details: $($_.Exception.InnerException)" -Type "ERROR"
+        }
+    }
+
+    Write-Log "Revert script execution completed." -Type "INFO"
+
+    if ($rebootNeeded) {
+        Write-Log "One or more reverted configurations require a system reboot to take full effect." -Type "WARN"
+        $rebootChoice = Read-Host "A reboot is recommended for changes to take full effect. Reboot now? (Y/N)"
+        if ($rebootChoice -eq 'Y' -or $rebootChoice -eq 'y') {
+            Write-Log "Initiating system reboot..." -Type "INFO"
+            Restart-Computer -Force
+        } else {
+            Write-Log "Reboot deferred. Please reboot your system manually at your earliest convenience." -Type "INFO"
+        }
+    } else {
+        Write-Log "No reboot is required for the reverted changes." -Type "INFO"
+    }
+
+} catch {
+    Write-Log "An unexpected error occurred during script execution: $($_.Exception.Message)" -Type "ERROR"
+    Write-Log "  Details: $($_.Exception.InnerException)" -Type "ERROR"
+} finally {
+    Write-Log "Script finished. Press any key to close this window." -Type "INFO"
+    Read-Host
+}

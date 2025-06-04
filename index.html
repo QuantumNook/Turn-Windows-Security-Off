@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+        <meta name="description" content="Turn Windows Defender Security Off" />
+        <meta name="author" content="Tows" />
+        <title>Tows Security Configurator</title> <link rel="icon" type="image/x-icon" href="assets/favicon.ico" />
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css" rel="stylesheet" />
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"> <link href="style.css" rel="stylesheet" /> </head>
+    <body class="d-flex flex-column">
+        <main class="flex-shrink-0">
+            <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container px-5">
+        <a class="navbar-brand" href="index.html">Tows</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav ms-auto mb-2 mb-lg-0"> <li class="nav-item"><a class="nav-link" href="#!" id="navLinkTows">Home</a></li>
+                <li class="nav-item"><a class="nav-link" href="#!" id="navLinkDocumentation">Documentation</a></li>
+                <li class="nav-item"><a class="nav-link" href="#!" id="navLinkSurveillance">Surveillance</a></li>
+                <li class="nav-item"><a class="nav-link" href="#!" id="navLinkDownload">Download</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+            <header class="py-3"> <div id="mainAppContent" class="container-fluid app-main-content-container"> 
+                    <div class="card bg-white rounded shadow-lg p-4 mb-4">
+                        <div class="card-body">
+                            <div id="globalConfigSection" class="mb-4 p-3 border rounded bg-light-subtle">
+                                <h5 class="mb-3 text-primary fw-bold">Global Configuration Presets</h5>
+                                <div class="row align-items-center">
+                                    <div class="col-md-9"> <select id="globalPresetSelect" class="form-select">
+                                            <option value="" selected>-- Select a Global Preset --</option>
+                                            <option value="forceOff">Force ALL Security Features OFF</option>
+                                            <option value="forceOn">Force ALL Security Features ON</option>
+                                            <option value="revertToDefault">Restore Windows Defaults (Remove Policies)</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3 text-center"> <button id="generateConfigBtn" class="btn btn-primary w-100">Generate</button>
+                                    </div>
+                                </div>
+                                <p class="form-text small mt-2">
+                                    Selecting "Force ALL Security Features ON/OFF" will adjust the individual toggles below and prepare a script to enforce that state.<br>
+                                    Selecting "Restore Windows Defaults" will prepare a special script to remove previous policy enforcements, returning control to Windows default behavior.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="loadingIndicator" class="text-center my-4 d-none">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Loading security features...</p>
+                    </div>
+
+                    <div id="securityFeaturesContainer" class="row">
+                        <div class="col-12 mb-4">
+                            <div class="card bg-white rounded shadow-lg p-4">
+                                <div class="card-body">
+                                    <h5 class="mb-3 text-secondary">Windows Defender & Antivirus</h5>
+                                    <div class="col-12 mb-3">
+                                        <div class="row align-items-center border p-3 rounded bg-light-subtle g-0">
+                                            <div class="col me-4">
+                                                <h5 class="mb-1">Windows Defender: Real-Time Protection</h5>
+                                                <p class="text-muted small mb-0">Continuously monitors files and processes for malicious activity. Disabling this significantly lowers your security posture.</p>
+                                            </div>
+                                            <div class="col-auto text-end d-flex flex-column align-items-end">
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" id="feature-1" data-feature-id="1" checked>
+                                                    <label class="form-check-label" for="feature-1"></label>
+                                                </div>
+                                                <div class="mt-1">
+                                                    <span id="status-1" class="text-muted small">Enabled (Default)</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 mb-3">
+                                        <div class="row align-items-center border p-3 rounded bg-light-subtle g-0">
+                                            <div class="col me-4">
+                                                <h5 class="mb-1">Windows Defender: Cloud-Delivered Protection</h5>
+                                                <p class="text-muted small mb-0">Sends suspicious samples to Microsoft's cloud for real-time analysis and blocking of new threats.</p>
+                                            </div>
+                                            <div class="col-auto text-end d-flex flex-column align-items-end">
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" id="feature-2" data-feature-id="2" checked>
+                                                    <label class="form-check-label" for="feature-2"></label>
+                                                </div>
+                                                <div class="mt-1">
+                                                    <span id="status-2" class="text-muted small">Enabled (Default)</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 mb-3">
+                                        <div class="row align-items-center border p-3 rounded bg-light-subtle g-0">
+                                            <div class="col me-4">
+                                                <h5 class="mb-1">Windows Defender: PUA Protection</h5>
+                                                <p class="text-muted small mb-0">Detects and blocks Potentially Unwanted Applications (PUAs) like adware and bloatware.</p>
+                                            </div>
+                                            <div class="col-auto text-end d-flex flex-column align-items-end">
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" id="feature-3" data-feature-id="3" checked>
+                                                    <label class="form-check-label" for="feature-3"></label>
+                                                </div>
+                                                <div class="mt-1">
+                                                    <span id="status-3" class="text-muted small">Enabled (Default)</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 mb-3">
+                                        <div class="row align-items-center border p-3 rounded bg-light-subtle g-0">
+                                            <div class="col me-4">
+                                                <h5 class="mb-1">Windows Defender: Tamper Protection</h5>
+                                                <p class="text-muted small mb-0">Prevents unauthorized changes to Microsoft Defender security settings and its essential files/processes.</p>
+                                            </div>
+                                            <div class="col-auto text-end d-flex flex-column align-items-end">
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" id="feature-4" data-feature-id="4" checked>
+                                                    <label class="form-check-label" for="feature-4"></label>
+                                                </div>
+                                                <div class="mt-1">
+                                                    <span id="status-4" class="text-muted small">Enabled (Default)</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 mb-3">
+                                        <div class="row align-items-center border p-3 rounded bg-light-subtle g-0">
+                                            <div class="col me-4">
+                                                <h5 class="mb-1">Windows Defender: Automatic Sample Submission</h5>
+                                                <p class="text-muted small mb-0">Controls whether suspicious files are automatically sent to Microsoft for analysis. Disabling this reduces cloud-based threat intelligence.</p>
+                                            </div>
+                                            <div class="col-auto text-end d-flex flex-column align-items-end">
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" id="feature-13" data-feature-id="13" checked>
+                                                    <label class="form-check-label" for="feature-13"></label>
+                                                </div>
+                                                <div class="mt-1">
+                                                    <span id="status-13" class="text-muted small">Enabled (Default)</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 mb-3">
+                                        <div class="row align-items-center border p-3 rounded bg-light-subtle g-0">
+                                            <div class="col me-4">
+                                                <h5 class="mb-1">Windows Defender: Cloud Block At First Seen</h5>
+                                                <p class="text-muted small mb-0">Blocks suspicious files immediately upon first encounter based on cloud analysis, before full definition updates.</p>
+                                            </div>
+                                            <div class="col-auto text-end d-flex flex-column align-items-end">
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" id="feature-14" data-feature-id="14" checked>
+                                                    <label class="form-check-label" for="feature-14"></label>
+                                                </div>
+                                                <div class="mt-1">
+                                                    <span id="status-14" class="text-muted small">Enabled (Default)</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 mb-3">
+                                        <div class="row align-items-center border p-3 rounded bg-light-subtle g-0">
+                                            <div class="col me-4">
+                                                <h5 class="mb-1">Windows Defender: MAPS Reporting</h5>
+                                                <p class="text-muted small mb-0">Controls participation in Microsoft Active Protection Service (MAPS) for cloud-based threat intelligence.</p>
+                                            </div>
+                                            <div class="col-auto text-end d-flex flex-column align-items-end">
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" id="feature-15" data-feature-id="15" checked>
+                                                    <label class="form-check-label" for="feature-15"></label>
+                                                </div>
+                                                <div class="mt-1">
+                                                    <span id="status-15" class="text-muted small">Enabled (Default)</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 mb-3">
+                                        <div class="row align-items-center border p-3 rounded bg-light-subtle g-0">
+                                            <div class="col me-4">
+                                                <h5 class="mb-1">Windows Defender: Automatic Sample Submission (Consent Level)</h5>
+                                                <p class="text-muted small mb-0">Controls the level of consent for sending suspicious samples to Microsoft. This is managed via PowerShell cmdlet.</p>
+                                            </div>
+                                            <div class="col-auto text-end d-flex flex-column align-items-end">
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" id="feature-20" data-feature-id="20" checked>
+                                                    <label class="form-check-label" for="feature-20"></label>
+                                                </div>
+                                                <div class="mt-1">
+                                                    <span id="status-20" class="text-muted small">Enabled (Default)</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 mb-4">
+                            <div class="card bg-white rounded shadow-lg p-4">
+                                <div class="card-body">
+                                    <h5 class="mb-3 text-secondary">App & Browser Control (SmartScreen)</h5>
+                                    <div class="col-12 mb-3">
+                                        <div class="row align-items-center border p-3 rounded bg-light-subtle g-0">
+                                            <div class="col me-4">
+                                                <h5 class="mb-1">SmartScreen: For Apps & Files</h5>
+                                                <p class="text-muted small mb-0">Protects against untrusted or malicious executables downloaded from the internet and launched outside a browser.</p>
+                                            </div>
+                                            <div class="col-auto text-end d-flex flex-column align-items-end">
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" id="feature-5" data-feature-id="5" checked>
+                                                    <label class="form-check-label" for="feature-5"></label>
+                                                </div>
+                                                <div class="mt-1">
+                                                    <span id="status-5" class="text-muted small">Enabled (Default)</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 mb-3">
+                                        <div class="row align-items-center border p-3 rounded bg-light-subtle g-0">
+                                            <div class="col me-4">
+                                                <h5 class="mb-1">SmartScreen: For Microsoft Edge</h5>
+                                                <p class="text-muted small mb-0">Provides phishing and malware protection within the Microsoft Edge browser.</p>
+                                            </div>
+                                            <div class="col-auto text-end d-flex flex-column align-items-end">
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" id="feature-6" data-feature-id="6" checked>
+                                                    <label class="form-check-label" for="feature-6"></label>
+                                                </div>
+                                                <div class="mt-1">
+                                                    <span id="status-6" class="text-muted small">Enabled (Default)</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 mb-3">
+                                        <div class="row align-items-center border p-3 rounded bg-light-subtle g-0">
+                                            <div class="col me-4">
+                                                <h5 class="mb-1">SmartScreen: Phishing Protection (Network Protection)</h5>
+                                                <p class="text-muted small mb-0">Protects against phishing sites and malicious downloads at the network level, part of Exploit Guard.</p>
+                                            </div>
+                                            <div class="col-auto text-end d-flex flex-column align-items-end">
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" id="feature-16" data-feature-id="16" checked>
+                                                    <label class="form-check-label" for="feature-16"></label>
+                                                </div>
+                                                <div class="mt-1">
+                                                    <span id="status-16" class="text-muted small">Enabled (Default)</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 mb-3">
+                                        <div class="row align-items-center border p-3 rounded bg-light-subtle g-0">
+                                            <div class="col me-4">
+                                                <h5 class="mb-1">SmartScreen: Warn about password reuse (Edge)</h5>
+                                                <p class="text-muted small mb-0">Warns users if they are reusing passwords detected in a data breach within Microsoft Edge.</p>
+                                            </div>
+                                            <div class="col-auto text-end d-flex flex-column align-items-end">
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" id="feature-17" data-feature-id="17" checked>
+                                                    <label class="form-check-label" for="feature-17"></label>
+                                                </div>
+                                                <div class="mt-1">
+                                                    <span id="status-17" class="text-muted small">Enabled (Default)</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 mb-3">
+                                        <div class="row align-items-center border p-3 rounded bg-light-subtle g-0">
+                                            <div class="col me-4">
+                                                <h5 class="mb-1">SmartScreen: Warn about unsafe password storage (Edge)</h5>
+                                                <p class="text-muted small mb-0">Warns users if they are storing passwords in an insecure manner in Microsoft Edge.</p>
+                                            </div>
+                                            <div class="col-auto text-end d-flex flex-column align-items-end">
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" id="feature-18" data-feature-id="18" checked>
+                                                    <label class="form-check-label" for="feature-18"></label>
+                                                </div>
+                                                <div class="mt-1">
+                                                    <span id="status-18" class="text-muted small">Enabled (Default)</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 mb-3">
+                                        <div class="row align-items-center border p-3 rounded bg-light-subtle g-0">
+                                            <div class="col me-4">
+                                                <h5 class="mb-1">SmartScreen: For Microsoft Store apps</h5>
+                                                <p class="text-muted small mb-0">Protects against malicious apps downloaded from the Microsoft Store or other sources.</p>
+                                            </div>
+                                            <div class="col-auto text-end d-flex flex-column align-items-end">
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" id="feature-19" data-feature-id="19" checked>
+                                                    <label class="form-check-label" for="feature-19"></label>
+                                                </div>
+                                                <div class="mt-1">
+                                                    <span id="status-19" class="text-muted small">Enabled (Default)</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 mb-4">
+                            <div class="card bg-white rounded shadow-lg p-4">
+                                <div class="card-body">
+                                    <h5 class="mb-3 text-secondary">Device Security & Core Isolation</h5>
+                                    <div class="col-12 mb-3">
+                                        <div class="row align-items-center border p-3 rounded bg-light-subtle g-0">
+                                            <div class="col me-4">
+                                                <h5 class="mb-1">User Account Control (UAC)</h5>
+                                                <p class="text-muted small mb-0">Requires explicit consent for administrative actions, preventing unauthorized system changes.</p>
+                                            </div>
+                                            <div class="col-auto text-end d-flex flex-column align-items-end">
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" id="feature-7" data-feature-id="7" checked>
+                                                    <label class="form-check-label" for="feature-7"></label>
+                                                </div>
+                                                <div class="mt-1">
+                                                    <span id="status-7" class="text-muted small">Enabled (Default)</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 mb-3">
+                                        <div class="row align-items-center border p-3 rounded bg-light-subtle g-0">
+                                            <div class="col me-4">
+                                                <h5 class="mb-1">Virtualization-Based Security (VBS)</h5>
+                                                <p class="text-muted small mb-0">Uses hardware virtualization to isolate critical system components and secrets (e.g., LSA credentials, kernel).</p>
+
+
+
+                                            </div>
+                                            <div class="col-auto text-end d-flex flex-column align-items-end">
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" id="feature-8" data-feature-id="8" checked>
+                                                    <label class="form-check-label" for="feature-8"></label>
+                                                </div>
+                                                <div class="mt-1">
+                                                    <span id="status-8" class="text-muted small">Enabled (Default)</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 mb-3">
+                                        <div class="row align-items-center border p-3 rounded bg-light-subtle g-0">
+                                            <div class="col me-4">
+                                                <h5 class="mb-1">HVCI (Memory Integrity)</h5>
+                                                <p class="text-muted small mb-0">Verifies all kernel-mode drivers and system files before they are loaded, ensuring they are properly signed and untampered.</p>
+                                            </div>
+                                            <div class="col-auto text-end d-flex flex-column align-items-end">
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" id="feature-9" data-feature-id="9" checked>
+                                                    <label class="form-check-label" for="feature-9"></label>
+                                                </div>
+                                                <div class="mt-1">
+                                                    <span id="status-9" class="text-muted small">Enabled (Default)</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 mb-3">
+                                        <div class="row align-items-center border p-3 rounded bg-light-subtle g-0">
+                                            <div class="col me-4">
+                                                <h5 class="mb-1">Credential Guard</h5>
+                                                <p class="text-muted small mb-0">Isolates LSA secrets (passwords, hashes) in a virtualized environment, protecting against theft.</p>
+                                            </div>
+                                            <div class="col-auto text-end d-flex flex-column align-items-end">
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" id="feature-10" data-feature-id="10" checked>
+                                                    <label class="form-check-label" for="feature-10"></label>
+                                                </div>
+                                                <div class="mt-1">
+                                                    <span id="status-10" class="text-muted small">Enabled (Default)</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 mb-3">
+                                        <div class="row align-items-center border p-3 rounded bg-light-subtle g-0">
+                                            <div class="col me-4">
+                                                <h5 class="mb-1">LSA Protection (RunAsPPL)</h5>
+                                                <p class="text-muted small mb-0">Protects the Local Security Authority process (lsass.exe) from being injected into or tampered with.</p>
+                                            </div>
+                                            <div class="col-auto text-end d-flex flex-column align-items-end">
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" id="feature-11" data-feature-id="11" checked>
+                                                    <label class="form-check-label" for="feature-11"></label>
+                                                </div>
+                                                <div class="mt-1">
+                                                    <span id="status-11" class="text-muted small">Enabled (Default)</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 mb-3">
+                                        <div class="row align-items-center border p-3 rounded bg-light-subtle g-0">
+                                            <div class="col me-4">
+                                                <h5 class="mb-1">Microsoft Vulnerable Driver Blocklist</h5>
+                                                <p class="text-muted small mb-0">Prevents known insecure drivers from loading, which could otherwise be exploited for kernel-level compromise.</p>
+                                            </div>
+                                            <div class="col-auto text-end d-flex flex-column align-items-end">
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" id="feature-12" data-feature-id="12" checked>
+                                                    <label class="form-check-label" for="feature-12"></label>
+                                                </div>
+                                                <div class="mt-1">
+                                                    <span id="status-12" class="text-muted small">Enabled (Default)</span>
+                                                </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 p-3 bg-light border rounded d-none" id="consoleLogContainer">
+                            <h5 class="mb-3">Console Log</h5>
+                            <pre id="consoleLog" class="bg-dark text-white p-3 rounded" style="max-height: 300px; overflow-y: auto;"></pre>
+                        </div>
+                    </div>
+
+                    <div id="documentationContent" class="container-fluid app-main-content-container d-none">
+                        </div>
+                    <div id="aboutContent" class="container-fluid app-main-content-container d-none">
+                        </div>
+                    <div id="downloadContent" class="container-fluid app-main-content-container d-none">
+                        </div>
+                    <div id="termsContent" class="container-fluid app-main-content-container d-none">
+                        </div>
+                    <div id="privacyContent" class="container-fluid app-main-content-container d-none">
+                        </div>
+                </header>
+                
+            </main>
+
+            <footer class="bg-dark py-4 mt-auto">
+                <div class="container px-5">
+                    <div class="row align-items-center justify-content-between flex-column flex-sm-row">
+                        <div class="col-auto"><div class="small m-0 text-white">Copyright &copy; Tows - Turn Off Windows Security - 2025</div></div> <div class="col-auto">
+                            <a class="link-light small" href="#!" id="footerLinkPrivacy">Privacy</a>
+                            <span class="text-white mx-1">&middot;</span>
+                            <a class="link-light small" href="#!" id="footerLinkTerms">Terms</a>
+                        </div>
+                    </div>
+                </div>
+            </footer>
+
+            <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+            <script src="config.js"></script>
+            <script src="security_features_data.js"></script>
+            <script src="documentation_generator.js"></script>
+            <script src="about_documentation.js"></script> <script src="script.js"></script>
+            <script src="generate_script_logic.js"></script>
+            <script src="download_generator.js"></script>
+            <script src="terms_generator.js"></script>
+            <script src="privacy_generator.js"></script>
+        </body>
+    </html>
