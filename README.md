@@ -1,7 +1,7 @@
 
-***<u>Ensure the switch next to "Tamper Protection" is in the "Off" position before proceeding to run any generated scripts!</u>***
+***<u>Ensure the switch next to "Tamper Protection" is in the "Off" position before proceeding!</u>***
 
----
+---www.tows.top
 
 ## 🚀 **How to Use TOWS**
 
