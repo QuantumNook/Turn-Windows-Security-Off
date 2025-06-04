@@ -9,7 +9,12 @@ This application provides a user-friendly interface to configure various Windows
 
 ## How to Use
 
-FROM WINDOWS 11 SECURITY > VIRUS AND THREAT PROTECTION > MANAGE SETTINGS > TAMPER PROTECTION MUST BE SET TO OFF
+!!!!!- CRITICAL IMPORTANCE - !!!!!
+
+FROM WINDOWS 11 SECURITY > VIRUS AND THREAT PROTECTION > MANAGE SETTINGS 
+
+> TAMPER PROTECTION >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>MUST BE SET TO OFF
+
 
 1.  **Access the Application:** Open the `index.html` file in your web browser. This application runs entirely client-side, so you don't need a special web server to use it locally.
 2.  **Select Your Configurations:** The application will display a list of Windows security features. Each feature will have a toggle (checkbox or slider) to enable or disable it.
