@@ -1,56 +1,66 @@
-# Windows Security Configurator
 
-**Version: 1.1**
-**Build: 20250604.1**
-**Changes:**
-- Added control over file and download security features (Mark-of-the-Web, download scanning).
-- Implemented randomized filenames for generated scripts to help evade detection.
-
-This application provides a user-friendly interface to configure various Windows security features, prioritizing Group Policy and MDM principles for controlled and reversible management. It's designed to help you adjust settings related to Windows Defender, SmartScreen, User Account Control (UAC), Virtualization-Based Security (VBS), and other system mitigations.
-
-## How to Use
-
-1.  **Access the Application:** Open the `index.html` file in your web browser. This application runs entirely client-side, so you don't need a special web server to use it locally.
-2.  **Select Your Configurations:** The application will display a list of Windows security features. Each feature will have a toggle (checkbox or slider) to enable or disable it.
-    *   **Review Descriptions:** Read the descriptions for each feature carefully to understand its purpose and security implications.
-    *   **Toggle Settings:** Adjust the toggles according to your desired security posture.
-3.  **Generate Scripts:** Once you have made your selections, click the "Generate" button (labeled "Generate Configuration Script" or similar in the UI).
-4.  **Download and Extract:** Your browser will download a `.zip` file with a randomized name (e.g., `WindowsSecurityConfig-randomstring.zip` or `WindowsSecurityRevert-randomstring.zip`).
-    *   **Extract this ZIP file** to a location on your computer, such as your Desktop. You may find that disabling the "Attachment Manager: Do not preserve zone information" feature within the application helps prevent Windows from interfering with extraction. Using a third-party archive tool like 7-Zip or WinRAR may also bypass these checks.
-    *   Inside the ZIP file, you will find two files with randomized names:
-        *   A PowerShell script (`.ps1`)
-        *   A Batch launcher script (`.bat`)
-5.  **Run the Configuration:**
-    *   **IMPORTANT:** You must run the batch file with Administrator privileges.
-    *   **Right-click** on the generated `.bat` file.
-    *   Select **"Run as administrator"**.
-    *   Windows User Account Control (UAC) might prompt you for confirmation; click "Yes" to allow it.
-    *   A command prompt window will open, and the script will execute. It will log its actions to the console.
-    *   **Pay attention to any messages in the command prompt**, especially if it indicates that a reboot is required for changes to take full effect.
-    *   Press Enter to close the command prompt window when prompted.
-
-## Key Features
-
-*   **User-Friendly Interface:** Easily toggle security features on or off.
-*   **Script Generation:** Creates PowerShell (`.ps1`) and Batch (`.bat`) scripts for automated execution.
-*   **Reversibility:** Focuses on settings that can be easily reverted to default states.
-*   **Administrator Privileges:** Generated scripts require elevated privileges for system-level changes.
-*   **Detailed Explanations:** Understand the purpose and security implications of each setting.
-*   **Download Security Control:** Explicit control over how Windows handles files downloaded from the internet, including disabling the 'Mark-of-the-Web' and download scanning.
-*   **Randomized Script Names:** Generated scripts use randomized filenames to help evade detection based on file name signatures.
-*   **Global Presets:** Easily apply "Force ON", "Force OFF", or "Restore Defaults" configurations.
-
-## Reverting Changes
-
-Use the "Restore Windows Defaults (Remove Policies)" option from the Global Configuration Presets dropdown. This will generate a special script designed to remove the policy enforcements set by this application, returning control over those settings back to Windows defaults or user control via the Windows Security interface.
-
-## Important Security Notes
-
-*   **Administrator Privileges:** The generated scripts modify system-level settings and therefore **require Administrator privileges** to run.
-*   **Reboots:** Some changes, particularly those related to Virtualization-Based Security (VBS), UAC, driver blocklists, and certain download security settings, require a system reboot or logging out/in to take full effect. The script will inform you if a reboot is recommended.
-*   **Understand the Implications:** Disabling security features can significantly reduce your system's protection against malware, exploits, and data theft. **This is especially true for the File & Download Security features.** Ensure you understand the security implications of each setting before making changes.
-*   **Backup:** It is always recommended to create a system restore point or a full backup before applying significant system changes.
-*   **Smart App Control:** Note that Smart App Control (in Windows 11) is not managed by this tool as it often requires a Windows reinstallation to re-enable once turned off. Disabling it manually before using this tool may be necessary depending on your usage patterns.
+***<u>Ensure the switch next to "Tamper Protection" is in the "Off" position before proceeding to run any generated scripts!</u>***
 
 ---
-*Generated by AI Instance with your guidance.*
+
+## ?? **How to Use TOWS**
+
+Follow these steps to configure your Windows security settings:
+
+1.  ?? **Access the Application:** Open the `index.html` file in your web browser. TOWS runs entirely client-side – no server needed!
+2.  ?? **Select Your Configurations:** The intuitive interface presents a list of Windows security features.
+    *   ? _Browse and Read:_ Carefully review the description and security implications for each feature. Understanding the impact of disabling a setting is crucial.
+    *   ??? _Toggle Away:_ Use the toggles to set each feature to your desired state (Enabled/Disabled).
+3.  ?? **Generate Scripts:** Once your selections are made, click the prominent **"Generate"** button.
+4.  ?? **Download and Extract:** Your browser will download a `.zip` file with a **randomized, unique name** (e.g., `WindowsSecurityConfig-randomstring.zip`). This helps avoid detection based on static filenames.
+    *   ?? _Extract Here:_ Extract the contents of this ZIP file to a convenient location (like your Desktop).
+    *   ?? _Find the Files:_ Inside the extracted folder, you'll find two files, also with **randomized names**: a PowerShell script (`.ps1`) and a Batch launcher script (`.bat`).
+5.  ?? **Run the Configuration (as Administrator):**
+    *   ?? _Elevated Access Required:_ The generated scripts modify system settings and **MUST be run with Administrator privileges**.
+    *   ??? _Right-Click & Run:_ **Right-click** on the generated **`.bat`** file.
+    *   ? _Confirm:_ Select **"Run as administrator"**. Confirm the User Account Control (UAC) prompt if it appears.
+    *   ??? _Observe:_ A command prompt window will open, showing the script's execution logs.
+    *   ?? _Reboot if Needed:_ Pay close attention to the script's output. It will inform you if a **system reboot** is required for some changes (especially Core Isolation features like VBS, HVCI, Credential Guard, LSA Protection) to take full effect.
+    *   ?? _Finish:_ Press Enter when prompted to close the command prompt.
+
+---
+
+## ? **Key Features at a Glance**
+
+*   ??? **Intuitive UI:** Effortlessly manage complex settings via a clean web interface.
+*   ?? **Automated Scripting:** Generates ready-to-run PowerShell and Batch scripts.
+*   ?? **Reversibility Focus:** Employs Group Policy-like registry changes for easy restoration.
+*   ?? **Administrator Power:** Scripts are designed for necessary elevated execution.
+*   ?? **Detailed Documentation:** Understand each setting with built-in explanations.
+*   ?? **Download Security Control:** Explicitly disable mechanisms like the 'Mark-of-the-Web' and download scanning that interfere with downloaded files.
+*   ?? **Randomized Script Names:** Enhances privacy and helps evade detection based on static filenames.
+*   Presets: Apply "Force ON", "Force OFF", or "Restore Defaults" configurations with a single click.
+
+---
+
+## ?? **Reverting Changes**
+
+Want to revert your configurations or restore Windows defaults?
+
+Navigate back to the TOWS application interface in your browser. From the "Global Configuration Presets" dropdown, select:
+
+*   **"Restore Windows Defaults (Remove Policies)"**
+
+Click **"Generate"**. This will produce a special script package designed to **remove** the policy enforcements set by TOWS, returning control over those settings back to the standard Windows behavior or allowing you to configure them via the Windows Security interface. Run this generated script package as Administrator following the same steps as above.
+
+---
+
+## ?? **Important Security Notes**
+
+*   ??? **REDUCED SECURITY:** Disabling security features **significantly increases your system's vulnerability** to malware, exploits, and data theft. Proceed with caution.
+*   ?? **DOWNLOAD RISKS:** Disabling **File & Download Security** features means Windows will perform fewer checks on downloaded files, including executables and archives. This removes a critical layer of defense against threats from the internet.
+*   ?? **REBOOTS ARE VITAL:** Some security changes only become effective after a **full system reboot**. The script will advise you when this is necessary.
+*   ?? **BACKUP FIRST:** Always create a **system restore point or a full backup** before applying significant system changes.
+*   ?? **UNDERSTANDING IS KEY:** This tool is for advanced users. Ensure you understand the function and risk of each setting before modification.
+*   ?? **SMART APP CONTROL:** Note that Smart App Control (Windows 11) is **NOT** managed by this tool. Disabling it may require manual steps and potentially a Windows reinstallation to re-enable.
+
+---
+
+By using TOWS, you acknowledge and accept the responsibility for the security state of your operating system.
+
+---
