@@ -1,4 +1,5 @@
 // security_features_data.js
+// Version: 1.1
 // This file contains the structured data for all Windows security features
 // that can be configured by the application.
 // Each entry includes details for UI rendering, Group Policy/MDM mapping,
@@ -243,6 +244,7 @@ const SECURITY_FEATURES_DATA = [
         groupPolicyPath: "Computer Configuration\\Windows Settings\\Security Settings\\Local Policies\\Security Options\\Configure LSASS to run as a protected process",
         registry: {
             enabled: {
+
                 path: "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Lsa",
                 valueName: "RunAsPPL",
                 type: "DWord",
@@ -281,7 +283,6 @@ const SECURITY_FEATURES_DATA = [
         rebootRequired: true,
         securityImplication: "High: Allows known vulnerable drivers to load, creating pathways for kernel-level compromise and privilege escalation (BYOVD attacks)."
     },
-    // --- NEWLY ADDED FEATURES BASED ON TESTING & DEEPSEEK'S ADVICE ---
     {
         id: 13,
         name: "Windows Defender: Automatic Sample Submission",
@@ -443,11 +444,8 @@ const SECURITY_FEATURES_DATA = [
         rebootRequired: false,
         securityImplication: "High: Disables protection against malicious apps from the Microsoft Store, increasing risk of infection."
     },
-    // --- Specific adjustment for Automatic Sample Submission (SubmitSamplesConsent) ---
-    // This entry is here for UI display purposes, but its actual setting is handled by Set-MpPreference in generate_script_logic.js
-    // The registry path/value here is for reference, but the script will use Set-MpPreference.
     {
-        id: 20, // Assign a new ID to avoid conflict with previous ID 19 for Sample Submission
+        id: 20,
         name: "Windows Defender: Automatic Sample Submission (Consent Level)",
         description: "Controls the level of consent for sending suspicious samples to Microsoft. This is managed via PowerShell cmdlet.",
         defaultEnabled: true,
@@ -468,7 +466,55 @@ const SECURITY_FEATURES_DATA = [
         },
         rebootRequired: false,
         securityImplication: "High: Affects the level of threat intelligence shared with Microsoft, impacting rapid response to new threats."
+    },
+    // --- NEW FEATURES FOR DOWNLOAD/ATTACHMENT SECURITY ---
+    {
+        id: 21, // Assign a new ID
+        name: "Attachment Manager: Do not preserve zone information (Disables Mark-of-the-Web)",
+        description: "Prevents Windows from adding the 'Mark-of-the-Web' to files downloaded from the Internet zone, reducing triggers for security checks on these files.",
+        defaultEnabled: true, // Default Windows behavior is to preserve zone information (policy disabled)
+        groupPolicyPath: "User Configuration\\Administrative Templates\\Windows Components\\Attachment Manager\\Do not preserve zone information in file attachments",
+        registry: {
+            enabled: { // This is the state where the policy is *NOT* enabled, meaning MotW IS preserved.
+                path: "HKCU:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\Attachments",
+                valueName: "SaveZoneInformation",
+                type: "DWord",
+                data: 0 // 0 means 'Disabled' for the policy (MotW is preserved) - This is the default Windows state.
+            },
+            disabled: { // This is the state where the policy IS enabled, meaning MotW is NOT preserved.
+                path: "HKCU:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\Attachments",
+                valueName: "SaveZoneInformation",
+                type: "DWord",
+                data: 1 // 1 means 'Enabled' for the policy (MotW is NOT preserved)
+            }
+        },
+        rebootRequired: false, // Log out/in is usually sufficient
+        securityImplication: "High: Disabling this makes Windows treat files downloaded from the internet the same as local files, bypassing security checks triggered by the file's origin."
+    },
+    {
+        id: 22, // Assign a new ID
+        name: "Windows Defender: Scan downloaded files and attachments",
+        description: "Controls whether Microsoft Defender Antivirus scans files and attachments that have been downloaded.",
+        defaultEnabled: true, // Default Windows behavior is to scan downloads (policy disabled)
+        groupPolicyPath: "Computer Configuration\\Administrative Templates\\Windows Components\\Microsoft Defender Antivirus\\Scan downloaded files and attachments",
+        registry: {
+             enabled: { // This is the state where the policy is *NOT* enabled, meaning scanning IS performed.
+                path: "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows Defender",
+                valueName: "DisableArchiveScanning",
+                type: "DWord",
+                data: 0 // 0 means 'Disabled' for the policy (Scanning IS performed) - This is the default Windows state.
+            },
+            disabled: { // This is the state where the policy IS enabled, meaning scanning is NOT performed.
+                path: "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows Defender",
+                valueName: "DisableArchiveScanning",
+                type: "DWord",
+                data: 1 // 1 means 'Enabled' for the policy (Scanning is NOT performed)
+            }
+        },
+        rebootRequired: false, // No reboot typically required
+        securityImplication: "Critical: Disabling this bypasses Defender's scanning for all downloaded content, including executables and archives."
     }
+    // Note: SmartScreen for apps/files (id 5) and Edge SmartScreen (id 6) are already included and cover other aspects of download/execution checks.
 ];
 
-logToConsole(`Loaded ${SECURITY_FEATURES_DATA.length} security feature definitions.`, 'info');
+logToConsole(`Loaded ${SECURITY_FEATURES_DATA.length} security feature definitions, including download/attachment security options.`, 'info');

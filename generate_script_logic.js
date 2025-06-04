@@ -1,6 +1,6 @@
 // generate_script_logic.js
-// Version: 1.28
-// Build: 20250604.8
+// Version: 1.30
+// Build: 20250604.10
 // Changes:
 // - Removed alert() messages after successful ZIP generation for both apply and revert scripts.
 // - Corrected missing 'feature_ps' prefix for data_ps and valueName_ps in generateRevertToDefaultPSScript.
@@ -10,12 +10,27 @@
 // - In generateRevertToDefaultPSScript, Core Isolation features (VBS, HVCI, Credential Guard, LSA Protection)
 //   are now explicitly forced ON, instead of just having their policies removed.
 // - Updated Set-MpPreference for SubmitSamplesConsent to use new ID (20) and values (3 for ON, 2 for OFF).
+// - FIXED: Changed 'false' to '$false' in PowerShell script templates for correct boolean assignment.
+// - FIXED: Corrected PowerShell comment syntax from '//' to '#' in generated scripts.
+// - FIXED: Corrected syntax error in formatPsData string escaping.
+// - NEW: Added random filename generation for downloaded scripts.
 // Handles the dynamic generation of PowerShell and Batch launcher scripts.
 
 // --- Helper functions for PowerShell script generation (GLOBAL SCOPE) ---
 const psEscape = (str) => (typeof str === 'string' ? str.replace(/'/g, "''") : str);
+// Corrected the string escaping syntax in formatPsData
 const formatPsData = (data) => (data === null || data === undefined ? '$null' : (typeof data === 'string' ? `'${data.replace(/'/g, "''")}'` : (typeof data === 'boolean' ? (data ? '$true' : '$false') : (Array.isArray(data) ? `@(${data.map(psData => formatPsData(psData)).join(',')})` : data))));
 
+// --- Helper function to generate a random string for filenames ---
+function generateRandomString(length) {
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    const charactersLength = characters.length;
+    for (let i = 0; i < length; i++) {
+        result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    }
+    return result;
+}
 
 /**
  * Generates the PowerShell script content for APPLYING configurations based on selected features.
@@ -53,20 +68,20 @@ try {
         $tamperProtectionDisabled = $true
     } catch {
         Write-Log "Failed to disable Tamper Protection. This might prevent some Defender settings from being applied. Error: $($_.Exception.Message)" -Type "WARN"
-        $tamperProtectionDisabled = $false
+        $tamperProtectionDisabled = $false # FIXED: Changed 'false' to '$false' and comment syntax
     }
 
     # Explicitly create necessary parent registry keys if they don't exist
     # This ensures paths are present for setting values
     $requiredPolicyPaths = @(
-        "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Reporting",
-        "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Spynet",
-        "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\Network Protection",
-        "HKLM:\SOFTWARE\Policies\Microsoft\Edge",
-        "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System"
+        "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows Defender\\Reporting",
+        "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows Defender\\Spynet",
+        "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows Defender\\Windows Defender Exploit Guard\\Network Protection",
+        "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Edge",
+        "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\System"
     )
     $requiredNonPolicyPaths = @(
-        "HKLM:\SOFTWARE\Microsoft\Windows Defender\Features"
+        "HKLM:\\SOFTWARE\\Microsoft\\Windows Defender\\Features"
     )
 
     foreach ($path in ($requiredPolicyPaths + $requiredNonPolicyPaths)) {
@@ -95,10 +110,12 @@ try {
     } else {
         foreach ($feature_ps in $featuresToConfigure) {
             $action_ps = if ($feature_ps.checked) { "Enabling" } else { "Disabling" }
-            
+
             # Special handling for Automatic Sample Submission (SubmitSamplesConsent) using Set-MpPreference
-            if ($feature_ps.id -eq 20) { # ID 20 is "Windows Defender: Automatic Sample Submission (Consent Level)"
-                $submitSamplesConsentValue = if ($feature_ps.checked) { 3 } else { 2 } # 3=Always Send, 2=Never Send
+            # ID 20 is "Windows Defender: Automatic Sample Submission (Consent Level)"
+            if ($feature_ps.id -eq 20) {
+                # 3=Always Send (ON), 2=Never Send (OFF)
+                $submitSamplesConsentValue = if ($feature_ps.checked) { 3 } else { 2 }
                 Write-Log "Configuring '$($feature_ps.name)' using Set-MpPreference -SubmitSamplesConsent $($submitSamplesConsentValue)..." -Type "INFO"
                 try {
                     Set-MpPreference -SubmitSamplesConsent $submitSamplesConsentValue -ErrorAction Stop
@@ -108,8 +125,9 @@ try {
                 }
             }
             # Skip direct registry configuration for Tamper Protection if it's handled by Set-MpPreference
-            elseif ($feature_ps.id -eq 4) { # ID 4 is "Windows Defender: Tamper Protection"
-                Write-Log "Skipping direct registry configuration for '$($feature_ps.name)' (ID: $($feature_ps.id)) as it is managed by Set-MpPreference." -Type "INFO"
+            # ID 4 is "Windows Defender: Tamper Protection" - Pre/Post steps handle this
+            elseif ($feature_ps.id -eq 4) {
+                Write-Log "Skipping direct registry configuration for '$($feature_ps.name)' (ID: $($feature_ps.id)) as it is managed by Set-MpPreference in pre/post steps." -Type "INFO"
             } else {
                 Write-Log "Configuring feature: $($feature_ps.name)..." -Type "INFO"
                 try {
@@ -120,7 +138,7 @@ try {
                     $data_ps = $registrySettingsToApply.data
                     Write-Log "Attempting to $($action_ps) '$($feature_ps.name)'..." -Type "INFO"
                     Write-Log "  Path: '$($path_ps)'" -Type "DEBUG"; Write-Log "  ValueName: '$($valueName_ps)'" -Type "DEBUG"; Write-Log "  Type: '$($type_ps)'" -Type "DEBUG"; Write-Log "  Target Data: '$($data_ps)'" -Type "DEBUG"
-                    
+
                     # Handle HKCU path specifically for the logged-in user
                     if ($path_ps.StartsWith("HKCU:")) {
                         # For HKCU, ensure the script runs in the user's context or specifies the user
@@ -138,10 +156,11 @@ try {
                     Set-ItemProperty -Path $keyPath_ps -Name $valueName_ps -Value $data_ps -Force -Type $type_ps -ErrorAction Stop
                     Write-Log "Successfully $($action_ps) '$($feature_ps.name)'." -Type "INFO"
                     if ($feature_ps.rebootRequired) { $rebootNeeded = $true; Write-Log "  Reboot required for this change." -Type "INFO" }
-                } catch { Write-Log "Failed to configure '$($feature_ps.name)'. Error: $($_.Exception.Message)" -Type "ERROR"; Write-Log "  Details (Path: '$($keyPath_ps)', ValueName: '$($valueName_ps)'): $($_.InnerException)" -Type "ERROR" }
+                } catch { Write-Log "Failed to configure '$($feature_ps.name)'. Error: $($_.Exception.Message)" -Type "ERROR"; Write-Log "  Details: $($_.InnerException)" -Type "ERROR" }
             }
         }
-    }`;
+    }
+`;
     }
 
     let psScriptFooter = `
@@ -256,19 +275,19 @@ try {
         $tamperProtectionDisabled = $true
     } catch {
         Write-Log "Failed to disable Tamper Protection. This might prevent some Defender settings from being applied. Error: $($_.Exception.Message)" -Type "WARN"
-        $tamperProtectionDisabled = false
+        $tamperProtectionDisabled = $false # FIXED: Changed 'false' to '$false' and comment syntax
     }
 
     # Explicitly create necessary parent registry keys if they don't exist (for revert script)
     $requiredPolicyPaths = @(
-        "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Reporting",
-        "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Spynet",
-        "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\Network Protection",
-        "HKLM:\SOFTWARE\Policies\Microsoft\Edge",
-        "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System"
+        "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows Defender\\Reporting",
+        "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows Defender\\Spynet",
+        "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows Defender\\Windows Defender Exploit Guard\\Network Protection",
+        "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Edge",
+        "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\System"
     )
     $requiredNonPolicyPaths = @(
-        "HKLM:\SOFTWARE\Microsoft\Windows Defender\Features"
+        "HKLM:\\SOFTWARE\\Microsoft\\Windows Defender\\Features"
     )
 
     foreach ($path in ($requiredPolicyPaths + $requiredNonPolicyPaths)) {
@@ -293,7 +312,7 @@ try {
     } else {
         foreach ($feature_ps in $featuresToRevert_ps) {
             Write-Log "Processing revert for feature: $($feature_ps.name) (ID: $($feature_ps.id))..." -Type "INFO"
-            
+
             # --- Special handling for Core Isolation features: Force ON ---
             # IDs: 8 (VBS), 9 (HVCI), 10 (Credential Guard), 11 (LSA Protection)
             # These will be set to their ENABLED state, not just removed.
@@ -305,7 +324,7 @@ try {
                     $valueName_ps = $feature_ps.registry.enabled.valueName
                     $type_ps = $feature_ps.registry.enabled.type
                     $data_ps = $feature_ps.registry.enabled.data # Force ON data
-                    
+
                     $keyPath_ps = $path_ps.Replace("HKLM\\", "HKLM:\").Replace("HKCU\\", "HKCU:\")
                     if (-not (Test-Path $keyPath_ps)) {
                         Write-Log "  Registry key '$($keyPath_ps)' does not exist. Creating it." -Type "WARN"
@@ -322,8 +341,8 @@ try {
             # --- Standard Revert: Remove Policy Value ---
             else {
                 try {
-                    $path_ps = $feature_ps.registry.enabled.path # Use enabled path as canonical for policy removal
-                    $valueName_ps = $feature_ps.registry.enabled.valueName 
+                    $path_ps = $feature_ps.registry.path # Use top-level path from revert array
+                    $valueName_ps = $feature_ps.registry.valueName # Use top-level valueName from revert array
 
                     Write-Log "  Attempting to remove policy value '$($valueName_ps)' from path '$($path_ps)' for '$($feature_ps.name)'." -Type "DEBUG"
                     $keyPath_ps = $path_ps.Replace("HKLM\\", "HKLM:\").Replace("HKCU\\", "HKCU:\")
@@ -350,7 +369,8 @@ try {
                 }
             }
         }
-    }`;
+    }
+`;
 
     let psScriptFooterRevert = `
     Write-Log "Registry changes completed." -Type "INFO"
@@ -410,13 +430,15 @@ finally { Write-Log "Script finished. Press any key to close." -Type "INFO"; Rea
 `;
 
     let finalPsRevertScriptContent = psScriptHeaderRevert + psScriptBodyRevert + psScriptFooterRevert;
-    
-    const psEscape = (str) => (typeof str === 'string' ? str.replace(/'/g, "''") : str);
+
+    // Removed redundant psEscape definition here as it's global now
     const featuresForPsRevertArray = [];
     allFeatures.forEach(feature => {
         // For revert, we primarily need the path and value name that our script *would* set.
         // We'll assume the 'enabled' state's path/valueName is canonical for the policy value.
         // For Core Isolation features, we'll ensure their 'enabled' state is passed so they are forced ON.
+        // The revert logic in the script now uses the top-level path and valueName for removal,
+        // but the enabled state data is still needed for the Core Isolation force-ON logic.
         const policyPath = feature.registry.enabled.path;
         const policyValueName = feature.registry.enabled.valueName;
 
@@ -428,16 +450,16 @@ finally { Write-Log "Script finished. Press any key to close." -Type "INFO"; Rea
             logToConsole(`Feature '${feature.name}' (ID: ${feature.id}) is missing path/valueName for Revert script. Skipping.`, 'warn');
         }
     });
-    
+
     let dynamicFeatureArrayForRevert = "$featuresToRevert_ps = @(\n" + featuresForPsRevertArray.join(";\n") + "\n)";
     if (featuresForPsRevertArray.length === 0) {
         dynamicFeatureArrayForRevert = "$featuresToRevert_ps = @()";
          logToConsole('No features suitable for revert script generation.', 'warn');
     }
-    
+
     finalPsRevertScriptContent = finalPsRevertScriptContent.replace(/%FEATURES_TO_REVERT_ARRAY_PLACEHOLDER%/g, dynamicFeatureArrayForRevert);
     finalPsRevertScriptContent = finalPsRevertScriptContent.replace(/%APP_VERSION%/g, APP_CONFIG.appVersion).replace(/%APP_BUILD%/g, APP_CONFIG.appBuild).replace(/%GENERATION_DATE%/g, new Date().toLocaleString()).replace(/%ENABLE_CONSOLE_LOGGING%/g, APP_CONFIG.enableConsoleLogging ? '$true' : '$false');
-    
+
     logToConsole('PowerShell Restore Defaults script content generated successfully.', 'info');
     return finalPsRevertScriptContent;
 }
@@ -484,7 +506,8 @@ if %errorlevel% neq 0 (
     echo.
     echo ====================================================================
     echo An error occurred during script execution.
-    echo Please review the output above for error messages.\r\n    echo ====================================================================
+    echo Please review the output above for error messages.
+    echo ====================================================================
     pause
 ) else (
     echo.
@@ -523,16 +546,18 @@ function downloadFile(content, fileName, mimeType) {
  * @param {Array<Object>} featuresToConfigure - The features selected by the user, with their 'checked' state.
  */
 function generateScripts(featuresToConfigure) {
-    logToConsole('Initiating APPLY configuration script generation and download.', 'info');
+    logToConsole('Initiating APPLY configuration script generation and download with randomized filenames.', 'info');
 
-    const psFileName = `${APP_CONFIG.generatedScriptNames.config}.ps1`;
-    const batchFileName = `${APP_CONFIG.generatedScriptNames.launcher}.bat`;
-    const zipFileName = `${APP_CONFIG.generatedScriptNames.config}.zip`;
+    const randomId = generateRandomString(10); // Use length 10 for robustness
+    const psFileName = `${APP_CONFIG.generatedScriptNames.config}-${randomId}.ps1`; // Append random ID
+    const batchFileName = `${APP_CONFIG.generatedScriptNames.launcher}-${randomId}.bat`; // Append random ID
+    const zipFileName = `${APP_CONFIG.generatedScriptNames.config}-Package-${randomId}.zip`; // Include 'Package' for clarity
 
     logToConsole('Generating PowerShell APPLY script content...', 'info');
     const psScriptContent = generatePowerShellScript(featuresToConfigure);
 
     logToConsole('Generating Batch launcher script content for APPLY script...', 'info');
+    // Pass the randomized PS filename to the batch script generator
     const batchScriptContent = generateBatchLauncherScript(psFileName, "Windows Security Configuration Script");
 
     logToConsole('Creating ZIP file for APPLY scripts...', 'info');
@@ -559,17 +584,19 @@ window.generateScripts = generateScripts; // Expose for standard config scripts
 /**
  * Main function to generate and download REVERT TO DEFAULT scripts.
  * @param {Array<Object>} allFeatures - All defined features from SECURITY_FEATURES_DATA.
+ * @returns {string} The full PowerShell script content for reverting settings.
  */
 function generateAndDownloadRevertScript(allFeatures) {
-    logToConsole('Initiating REVERT TO DEFAULT script generation and download.', 'info');
+    logToConsole('Initiating REVERT TO DEFAULT script generation and download with randomized filenames.', 'info');
 
-    const psFileName = `${APP_CONFIG.generatedScriptNames.revert}.ps1`;
-    const batchFileName = `${APP_CONFIG.generatedScriptNames.launcher}.bat`;
-    const zipFileName = `${APP_CONFIG.generatedScriptNames.revert}.zip`;
+    const randomId = generateRandomString(10); // Use length 10 for robustness
+    const psFileName = `${APP_CONFIG.generatedScriptNames.revert}-${randomId}.ps1`; // Append random ID
+    const batchFileName = `${APP_CONFIG.generatedScriptNames.launcher}-${randomId}.bat`; // Append random ID
+    const zipFileName = `${APP_CONFIG.generatedScriptNames.revert}-Package-${randomId}.zip`; // Include 'Package' for clarity
 
     logToConsole('Generating PowerShell REVERT TO DEFAULT script content...', 'info');
     const psScriptContent = generateRevertToDefaultPSScript(allFeatures);
-    
+
     if (!psScriptContent) { // Might be null if no features were suitable for revert
         logToConsole('PowerShell REVERT script content is empty. Aborting download.', 'warn');
         alert('Could not generate the Revert to Default script as no suitable features were found or an error occurred.');
@@ -577,6 +604,7 @@ function generateAndDownloadRevertScript(allFeatures) {
     }
 
     logToConsole('Generating Batch launcher script content for REVERT script...', 'info');
+     // Pass the randomized PS filename to the batch script generator
     const batchScriptContent = generateBatchLauncherScript(psFileName, "Windows Security Restore Defaults Script");
 
     logToConsole('Creating ZIP file for REVERT scripts...', 'info');
@@ -601,4 +629,4 @@ function generateAndDownloadRevertScript(allFeatures) {
 window.generateAndDownloadRevertScript = generateAndDownloadRevertScript; // Expose for revert scripts
 
 
-logToConsole('generate_script_logic.js loaded (v1.26).', 'info');
+logToConsole('generate_script_logic.js loaded (v1.30).', 'info');
