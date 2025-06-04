@@ -4,7 +4,7 @@
 const APP_CONFIG = {
     // Flag to enable or disable console logging globally.
     // Set to 'true' to show debug messages in the console, 'false' to suppress them.
-    enableConsoleLogging: false, // Temporarily set to true for debugging. Remember to set back to false later if desired.
+    enableConsoleLogging: true, // Temporarily set to true for debugging. Remember to set back to false later if desired.
 
     // Version and Build information for the entire application.
     appVersion: "1.0",
