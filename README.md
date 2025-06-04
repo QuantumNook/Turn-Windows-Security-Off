@@ -1,7 +1,7 @@
 
 ***<u>Ensure the switch next to "Tamper Protection" is in the "Off" position before proceeding!</u>***
 
----http://www.tows.top
+---https://www.tows.top
 
 ## 🚀 **How to Use TOWS**
 
