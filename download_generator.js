@@ -1,8 +1,10 @@
 // download_generator.js
-// Version: 1.6
-// Build: 20250604.7
+// Version: 2.2
+// Build: 20250605.4 // Updated build number
 // Changes:
-// - Ensured all current application files are included in the download package ZIP.
+// - Streamlined download: Now downloads a pre-packaged ZIP file directly.
+// - Removed dynamic file fetching and JSZip file inclusion for the main application download.
+// - Removed confirmation alert.
 // Contains logic for dynamically generating the application's Download section content.
 
 /**
@@ -42,6 +44,9 @@ Tows/
 |-- terms_generator.js
 |-- privacy_generator.js
 |-- README.md
+|-- launch_script.bat.txt
+|-- config_script.ps1.txt
+|-- revert_script.ps1.txt
 |-- assets/
     |-- favicon.ico
 |-- Generated Scripts/ (These are created after using the tool)
@@ -49,7 +54,7 @@ Tows/
     |-- WindowsSecurityRevert-[random].ps1
     |-- LaunchConfiguration-[random].bat
                     </pre>
-                    <p class="small text-muted"><em>Note: The <code>.ps1</code> and <code>.bat</code> files under "Generated Scripts" are dynamically created by the application when you click 'Generate' on the main page, based on your selections. The initial application package provides the core files for running the tool. Randomized names are used for generated scripts to help evade detection.</em></p>
+                    <p class="small text-muted"><em>Note: The files under "Generated Scripts" are dynamically created by the application when you click 'Generate' on the main page, based on your selections. The initial application package provides the core files for running the tool. Randomized names are used for generated scripts to help evade detection.</em></p>
 
                     <h5 class="mt-4 mb-3 text-dark fw-bold">Licensing & Usage</h5>
                     <p>Tows Security Configurator is licensed under the **MIT Open Source License**. This means you are free to:</p>
@@ -94,65 +99,27 @@ Tows/
 }
 
 /**
- * Downloads the entire application as a ZIP file.
+ * Downloads the pre-packaged application ZIP file directly.
  */
 async function downloadApplicationPackage() {
-    logToConsole('Initiating download of full application package.', 'info');
-    const zip = new JSZip();
-    const appFolderName = APP_CONFIG.appFolderName; // Use APP_CONFIG.appFolderName from config.js
-
-    // List of files to include in the ZIP (excluding dynamically generated scripts)
-    // Ensure these paths are correct relative to your index.html
-    const filesToInclude = [
-        'index.html',
-        'style.css',
-        'config.js',
-        'security_features_data.js',
-        'documentation_generator.js',
-        'about_documentation.js',
-        'generate_script_logic.js',
-        'script.js',
-        'download_generator.js', // This file itself
-        'terms_generator.js', // Added
-        'privacy_generator.js', // Added
-        'README.md',
-        'assets/favicon.ico'
-    ];
+    logToConsole('Initiating direct download of pre-packaged application ZIP.', 'info');
+    
+    const appFolderName = APP_CONFIG.appFolderName;
+    const zipFileName = `${appFolderName}.zip`;
 
     try {
-        // Fetch each file and add it to the zip
-        for (const filePath of filesToInclude) {
-            logToConsole(`Fetching: ${filePath}`, 'debug');
-            const response = await fetch(filePath);
-            if (!response.ok) {
-                throw new Error(`Failed to fetch ${filePath}: ${response.statusText}`);
-            }
-
-            // Handle binary files differently (like favicon.ico)
-            if (filePath.endsWith('.ico')) {
-                 const blobContent = await response.blob();
-                 zip.file(`${appFolderName}/${filePath}`, blobContent, {binary: true});
-            } else {
-                 const fileContent = await response.text();
-                 zip.file(`${appFolderName}/${filePath}`, fileContent);
-            }
-        }
-
-        logToConsole('All application files fetched. Generating ZIP...', 'info');
-        zip.generateAsync({ type: "blob" })
-            .then(function(content) {
-                downloadFile(content, `${appFolderName}.zip`, 'application/zip');
-                logToConsole('Full application package ZIP generated and download initiated.', 'info');
-            })
-            .catch(error => {
-                logToConsole(`Error generating application package ZIP: ${error.message}`, 'error');
-                alert('Failed to generate the application download package.');
-            });
+        const a = document.createElement('a');
+        a.href = zipFileName;
+        a.download = zipFileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        logToConsole(`Direct download initiated for: ${zipFileName}`, 'info');
 
     } catch (error) {
-        logToConsole(`Error during file fetching for package: ${error.message}`, 'error');
-        alert(`Failed to prepare application download: ${error.message}`);
+        logToConsole(`Error initiating direct download: ${error.message}`, 'error');
+        alert(`Failed to initiate application download. Please ensure '${zipFileName}' is in the correct directory. Also check browser console for more details.`);
     }
 }
 
-logToConsole('download_generator.js loaded (v1.6).', 'info');
+logToConsole('download_generator.js loaded (v2.2).', 'info');
